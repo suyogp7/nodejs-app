@@ -11,7 +11,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    credentialsId: 'github-pat',   // <-- Jenkins credential ID for GitHub PAT
+                    credentialsId: 'github-pat',   // Jenkins credential ID for GitHub PAT
                     url: 'https://github.com/suyogp7/nodejs-app.git'
             }
         }
@@ -27,12 +27,12 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',   // <-- Jenkins credential ID for Docker Hub PAT
+                    credentialsId: 'dockerhub-creds',   // Jenkins credential ID for Docker Hub PAT
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
@@ -60,5 +60,3 @@ pipeline {
         }
     }
 }
-
-
