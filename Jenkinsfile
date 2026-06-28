@@ -10,10 +10,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git(
-                    branch: 'main',
-                    url: 'https://github.com/suyogp7/nodejs-app.git',
-                    credentialsId: "${GITHUB_CREDENTIALS}"
+                
+                 git (branch: 'main',
+                      url: 'https://github.com/suyogp7/nodejs-app.git',
+                      credentialsId: "${GITHUB_CREDENTIALS}")
                 )
             }
         }
