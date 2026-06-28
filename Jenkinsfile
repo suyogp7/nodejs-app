@@ -10,21 +10,23 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git(branch: 'main', url: 'https://github.com/suyogp7/nodejs-app.git', credentialsId: GITHUB_CREDENTIALS)
+                git(branch: 'main',
+                    url: 'https://github.com/suyogp7/nodejs-app.git',
+                    credentialsId: GITHUB_CREDENTIALS)
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
-                }
+                sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS,
+                                                 usernameVariable: 'DOCKER_USER',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
@@ -35,23 +37,17 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh """
-                        helm upgrade --install nodejs-app ./helm-chart \
-                            --set image.repository=${DOCKER_IMAGE} \
-                            --set image.tag=${BUILD_NUMBER}
-                    """
-                }
+                sh """
+                    helm upgrade --install nodejs-app ./helm-chart \
+                        --set image.repository=${DOCKER_IMAGE} \
+                        --set image.tag=${BUILD_NUMBER}
+                """
             }
         }
     }
 
     post {
-        success {
-            echo "✅ Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed. Check logs."
-        }
+        success { echo "✅ Pipeline completed successfully!" }
+        failure { echo "❌ Pipeline failed. Check logs." }
     }
 }
