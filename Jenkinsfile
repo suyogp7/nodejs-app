@@ -32,9 +32,14 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                        docker login -u $DOCKER_USER -p $DOCKER_PASS
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    '''
+    export DOCKER_CONFIG=$HOME/.docker
+    mkdir -p $DOCKER_CONFIG
+    echo '{"credsStore":""}' > $DOCKER_CONFIG/config.json
+
+    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+ '''
+
                 }
             }
         }
@@ -50,13 +55,39 @@ pipeline {
             }
         }
     }
+post {
+    success {
+        echo "✅ Deployment successful!"
+    }
+    failure {
+        echo "❌ Build failed. Check console output."
+    }
+}
+stage('Checkout') {
+    steps {
+        git branch: 'main',
+            credentialsId: 'github-pat',
+            url: 'https://github.com/suyogp7/nodejs-app.git'
+    }
+}
 
-    post {
-        success {
-            echo "✅ Deployment successful!"
-        }
-        failure {
-            echo "❌ Build failed. Check console output."
+stage('Push to Docker Hub') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+                export DOCKER_CONFIG=$HOME/.docker
+                mkdir -p $DOCKER_CONFIG
+                echo '{"credsStore":""}' > $DOCKER_CONFIG/config.json
+
+                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                docker push suyog2306/nodejs-app:1.0
+            '''
         }
     }
 }
+
+b746ce3 (Fix Docker login with credsStore disabled)
