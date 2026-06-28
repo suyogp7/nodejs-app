@@ -10,8 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                
-                 git (branch: 'main',url: 'https://github.com/suyogp7/nodejs-app.git', credentialsId: "${GITHUB_CREDENTIALS}")
+                git(branch: 'main', url: 'https://github.com/suyogp7/nodejs-app.git', credentialsId: GITHUB_CREDENTIALS)
             }
         }
 
@@ -25,11 +24,11 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                        sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
-                    }
+                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    '''
                 }
             }
         }
@@ -38,9 +37,9 @@ pipeline {
             steps {
                 script {
                     sh """
-                    helm upgrade --install nodejs-app ./helm-chart \
-                        --set image.repository=${DOCKER_IMAGE} \
-                        --set image.tag=${BUILD_NUMBER}
+                        helm upgrade --install nodejs-app ./helm-chart \
+                            --set image.repository=${DOCKER_IMAGE} \
+                            --set image.tag=${BUILD_NUMBER}
                     """
                 }
             }
